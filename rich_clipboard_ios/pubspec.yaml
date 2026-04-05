@@ -11,7 +11,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  rich_clipboard_platform_interface: ^1.0.0
+  rich_clipboard_platform_interface:
+    path: ../rich_clipboard_platform_interface
 
 dev_dependencies:
   flutter_lints: ^2.0.0
