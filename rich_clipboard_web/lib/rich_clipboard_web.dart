@@ -7,6 +7,7 @@ import 'package:rich_clipboard_platform_interface/rich_clipboard_platform_interf
 
 const _kMimeTextPlain = 'text/plain';
 const _kMimeTextHtml = 'text/html';
+const _kMimeQuillDeltaJson = 'application/vnd.quill.delta+json';
 
 bool _detectClipboardApi() {
   final clipboard = window.navigator.clipboard;
@@ -64,6 +65,7 @@ class RichClipboardWeb extends RichClipboardPlatform {
 
     String? text;
     String? html;
+    String? quillDeltaJson;
     if (availableTypes.contains(_kMimeTextPlain)) {
       final textBlob = await item.getType('text/plain');
       text = await textBlob.text();
@@ -72,10 +74,15 @@ class RichClipboardWeb extends RichClipboardPlatform {
       final htmlBlob = await item.getType('text/html');
       html = await htmlBlob.text();
     }
+    if (availableTypes.contains(_kMimeQuillDeltaJson)) {
+      final quillDeltaBlob = await item.getType(_kMimeQuillDeltaJson);
+      quillDeltaJson = await quillDeltaBlob.text();
+    }
 
     return RichClipboardData(
       text: text,
       html: html,
+      quillDeltaJson: quillDeltaJson,
     );
   }
 

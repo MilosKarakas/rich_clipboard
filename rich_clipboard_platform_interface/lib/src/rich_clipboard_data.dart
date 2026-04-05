@@ -3,15 +3,17 @@ import 'package:flutter/services.dart';
 
 const _kTextPlain = 'text/plain';
 const _kTextHtml = 'text/html';
+const kQuillDeltaJsonClipboardMime = 'application/vnd.quill.delta+json';
 
 /// Data from the system clipboard.
 @immutable
 class RichClipboardData implements ClipboardData {
-  const RichClipboardData({this.text, this.html});
+  const RichClipboardData({this.text, this.html, this.quillDeltaJson});
   RichClipboardData.fromMap(Map<String, String?> map)
       : this(
           text: map[_kTextPlain],
           html: map[_kTextHtml],
+          quillDeltaJson: map[kQuillDeltaJsonClipboardMime],
         );
 
   @override
@@ -20,6 +22,9 @@ class RichClipboardData implements ClipboardData {
   /// HTML variant of this clipboard data.
   final String? html;
 
+  /// Quill Delta JSON variant of this clipboard data.
+  final String? quillDeltaJson;
+
   /// Convert this object to a map of MIME types to strings.
   ///
   /// This is primarily a convenience method for passing [RichClipboardData]
@@ -27,10 +32,12 @@ class RichClipboardData implements ClipboardData {
   Map<String, String?> toMap() => {
         _kTextPlain: text,
         _kTextHtml: html,
+        kQuillDeltaJsonClipboardMime: quillDeltaJson,
       };
 
   @override
-  String toString() => 'RichClipboardData{ text: $text, html: $html }';
+  String toString() =>
+      'RichClipboardData{ text: $text, html: $html, quillDeltaJson: $quillDeltaJson }';
 
   @override
   operator ==(Object other) =>
@@ -38,8 +45,9 @@ class RichClipboardData implements ClipboardData {
       other is RichClipboardData &&
           runtimeType == other.runtimeType &&
           text == other.text &&
-          html == other.html;
+          html == other.html &&
+          quillDeltaJson == other.quillDeltaJson;
 
   @override
-  int get hashCode => text.hashCode ^ html.hashCode;
+  int get hashCode => text.hashCode ^ html.hashCode ^ quillDeltaJson.hashCode;
 }

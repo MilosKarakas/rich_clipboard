@@ -4,7 +4,8 @@ import 'src/fallback_rich_clipboard.dart';
 import 'src/rich_clipboard_data.dart';
 
 export 'src/method_channel_rich_clipboard.dart' show MethodChannelRichClipboard;
-export 'src/rich_clipboard_data.dart' show RichClipboardData;
+export 'src/rich_clipboard_data.dart'
+    show RichClipboardData, kQuillDeltaJsonClipboardMime;
 
 abstract class RichClipboardPlatform extends PlatformInterface {
   RichClipboardPlatform() : super(token: _token);

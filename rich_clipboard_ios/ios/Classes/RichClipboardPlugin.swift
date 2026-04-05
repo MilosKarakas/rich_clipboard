@@ -3,6 +3,7 @@ import UniformTypeIdentifiers
 
 let mimeTextPlain = "text/plain"
 let mimeTextHtml = "text/html"
+let mimeQuillDeltaJson = "application/vnd.quill.delta+json"
 let utTypeTextPlain = "public.text"
 let utTypeTextHtml = "public.html"
 let utTypeTextRtf = "public.rtf"
@@ -46,24 +47,34 @@ public class RichClipboardPlugin: NSObject, FlutterPlugin {
                 result[mimeTextHtml] = String(data: htmlData, encoding: .utf8)
             } catch {}
         }
+        if let quillDeltaData = board.data(forPasteboardType: mimeQuillDeltaJson),
+           let quillDeltaJson = String(data: quillDeltaData, encoding: .utf8) {
+            result[mimeQuillDeltaJson] = quillDeltaJson
+        } else if let quillDeltaJson =
+            board.value(forPasteboardType: mimeQuillDeltaJson) as? String {
+            result[mimeQuillDeltaJson] = quillDeltaJson
+        }
         return result
     }
 
     func setData(_ arguments: Any?) {
         let board = UIPasteboard.general
-        board.items = [[:]]
-
         guard let data = (arguments as? [String: String?])?.compactMapValues({ $0 }) else {
             return
         }
 
+        var item: [String: Any] = [:]
         if let text = data[mimeTextPlain] {
-            board.string = text
+            item[utTypeTextPlain] = text
+        }
+        if let html = data[mimeTextHtml] {
+            item[utTypeTextHtml] = Data(html.utf8)
+        }
+        if let quillDeltaJson = data[mimeQuillDeltaJson] {
+            item[mimeQuillDeltaJson] = Data(quillDeltaJson.utf8)
         }
 
-        if let html = data[mimeTextHtml] {
-            board.items[0][utTypeTextHtml] = html
-        }
+        board.items = [item]
     }
 
     func getAvailableTypes() -> [String] {
