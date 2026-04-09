@@ -1,6 +1,7 @@
 package com.bringingfire.rich_clipboard
 
 import android.content.ClipData
+import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Build
@@ -109,13 +110,18 @@ class RichClipboardPlugin : FlutterPlugin, MethodCallHandler {
             htmlText != null ->
                 ClipData.newHtmlText(MIME_TEXT_PLAIN, htmlText, htmlText)
             quillDeltaJson != null ->
-                ClipData.newPlainText(MIME_TEXT_PLAIN, quillDeltaJson)
+                ClipData(
+                    ClipDescription(
+                        MIME_TEXT_PLAIN,
+                        arrayOf(MIME_TEXT_PLAIN, MIME_QUILL_DELTA_JSON)
+                    ),
+                    ClipData.Item(quillDeltaJson)
+                )
             else -> null
         }
 
         if (clip != null) {
             if (quillDeltaJson != null) {
-                clip.description.addMimeTypes(arrayOf(MIME_QUILL_DELTA_JSON))
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     val extras = clip.description.extras ?: PersistableBundle()
                     extras.putString(MIME_QUILL_DELTA_JSON, quillDeltaJson)
