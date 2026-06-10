@@ -85,11 +85,11 @@ public class RichClipboardPlugin: NSObject, FlutterPlugin {
         if data.starts(with: [0xEF, 0xBB, 0xBF]) {
             return String(data: data, encoding: .utf8)
         }
-        if data.starts(with: [0xFF, 0xFE]) {
-            return String(data: data, encoding: .utf16LittleEndian)
-        }
-        if data.starts(with: [0xFE, 0xFF]) {
-            return String(data: data, encoding: .utf16BigEndian)
+        // .utf16 honors a leading BOM (either endianness) and strips it.
+        if data.starts(with: [0xFF, 0xFE]) || data.starts(with: [0xFE, 0xFF]) {
+            if let utf16 = String(data: data, encoding: .utf16) {
+                return utf16
+            }
         }
         if let utf8 = String(data: data, encoding: .utf8) {
             return utf8
@@ -107,8 +107,10 @@ public class RichClipboardPlugin: NSObject, FlutterPlugin {
                 }
             }
         }
-        return String(data: data, encoding: .utf16)
-            ?? String(data: data, encoding: .windowsCP1252)
+        // No BOM, not valid UTF-8, and no declared charset: assume a legacy
+        // 8-bit Western encoding. Do NOT try bare UTF-16 here, as it succeeds on
+        // arbitrary byte sequences and yields garbage.
+        return String(data: data, encoding: .windowsCP1252)
             ?? String(data: data, encoding: .isoLatin1)
     }
 
