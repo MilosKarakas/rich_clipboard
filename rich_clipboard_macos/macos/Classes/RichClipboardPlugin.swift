@@ -61,9 +61,15 @@ public class RichClipboardPlugin: NSObject, FlutterPlugin {
         guard let attrStr = NSAttributedString(rtf: boardRtf, documentAttributes: nil) else {
             return nil
         }
+        // Pin the export encoding to UTF-8 so the produced bytes match the
+        // UTF-8 decode below. Without .characterEncoding the writer relies on
+        // heuristics and can emit mismatched bytes, turning "ä" into "Ã¤".
         guard let htmlData = try? attrStr.data(
             from: NSRange(location: 0, length: attrStr.length),
-            documentAttributes: [.documentType: NSAttributedString.DocumentType.html])
+            documentAttributes: [
+                .documentType: NSAttributedString.DocumentType.html,
+                .characterEncoding: String.Encoding.utf8.rawValue,
+            ])
         else {
             return nil
         }
