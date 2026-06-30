@@ -1,5 +1,7 @@
 import 'dart:convert' show utf8;
 
+import 'package:rich_clipboard_platform_interface/rich_clipboard_platform_interface.dart';
+
 const _kStartFragmentComment = '<!--StartFragment-->';
 const _kEndFragmentComment = '<!--EndFragment-->';
 
@@ -10,6 +12,21 @@ EndHTML:0000000000
 StartFragment:0000000000
 EndFragment:0000000000
 ''';
+
+/// Wraps bare HTML fragments in a minimal document with `<body>` tags.
+///
+/// Windows "HTML Format" handling expects a document body when inserting
+/// StartFragment/EndFragment markers. Klapp (and other apps) often copy
+/// fragments like `<p>…</p>` without `<html>` or `<body>`.
+String ensureHtmlDocumentBody(String html) {
+  final lower = html.toLowerCase();
+  if (lower.contains('<body')) {
+    return html;
+  }
+
+  final prepared = prepareHtmlForClipboard(html);
+  return '<html><head></head><body>$prepared</body></html>';
+}
 
 /// Remove the leading description from Windows clipboard HTML.
 ///
@@ -29,21 +46,28 @@ String stripWin32HtmlDescription(String html) {
 /// Turn an HTML document into a list of UTF-8 code units suitable for storing
 /// in the Windows clipboard as the "HTML Format" type.
 List<int> constructWin32HtmlClipboardData(String html) {
+  html = ensureHtmlDocumentBody(html);
+
   // Windows wants these marker comments in the HTML, and future parts of our
   // code relies on them being present. It's probably technically incorrect
   // to just wrap the entire body since that could include things like meta
   // tags, but it works for Google Docs so it's good enough for us.
   if (!html.contains(_kStartFragmentComment)) {
-    final startBodyIndex = html.indexOf('<body>') + '<body>'.length;
-    html = html.substring(0, startBodyIndex) +
-        _kStartFragmentComment +
-        html.substring(startBodyIndex);
+    final bodyStart = html.toLowerCase().indexOf('<body>');
+    if (bodyStart >= 0) {
+      final startBodyIndex = bodyStart + '<body>'.length;
+      html = html.substring(0, startBodyIndex) +
+          _kStartFragmentComment +
+          html.substring(startBodyIndex);
+    }
   }
   if (!html.contains(_kEndFragmentComment)) {
-    final endBodyIndex = html.indexOf('</body>');
-    html = html.substring(0, endBodyIndex) +
-        _kEndFragmentComment +
-        html.substring(endBodyIndex);
+    final bodyEnd = html.toLowerCase().lastIndexOf('</body>');
+    if (bodyEnd >= 0) {
+      html = html.substring(0, bodyEnd) +
+          _kEndFragmentComment +
+          html.substring(bodyEnd);
+    }
   }
 
   final descUtf8Len = utf8.encode(_kHtmlDescriptionTemplate).length;

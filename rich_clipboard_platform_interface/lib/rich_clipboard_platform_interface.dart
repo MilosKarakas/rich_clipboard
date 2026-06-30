@@ -3,6 +3,12 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'src/fallback_rich_clipboard.dart';
 import 'src/rich_clipboard_data.dart';
 
+export 'src/html_clipboard_encoding.dart'
+    show
+        htmlContainsNonAscii,
+        htmlHasCharsetDeclaration,
+        normalizeHtmlFromClipboard,
+        prepareHtmlForClipboard;
 export 'src/method_channel_rich_clipboard.dart' show MethodChannelRichClipboard;
 export 'src/rich_clipboard_data.dart'
     show RichClipboardData, kQuillDeltaJsonClipboardMime;

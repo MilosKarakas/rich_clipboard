@@ -75,4 +75,23 @@ void main() {
     expect(fragmentString, startsWith('<h1>'));
     expect(fragmentString, endsWith('</h1>'));
   });
+
+  test('constructWin32HtmlClipboardData wraps bare fragments with charset', () {
+    const fragment = '<p>Schulgelände</p>';
+    final clipboardHtmlData = constructWin32HtmlClipboardData(fragment);
+    final clipboardHtmlString = utf8.decode(clipboardHtmlData);
+
+    expect(clipboardHtmlString, contains('charset="UTF-8"'));
+    expect(clipboardHtmlString, contains('Schulgelände'));
+    expect(clipboardHtmlString, contains('<!--StartFragment-->'));
+    expect(clipboardHtmlString, contains('<!--EndFragment-->'));
+  });
+
+  test('ensureHtmlDocumentBody wraps fragments', () {
+    const fragment = '<p>ä</p>';
+    final document = ensureHtmlDocumentBody(fragment);
+    expect(document.toLowerCase(), contains('<body>'));
+    expect(document.toLowerCase(), contains('</body>'));
+    expect(document, contains('charset="UTF-8"'));
+  });
 }

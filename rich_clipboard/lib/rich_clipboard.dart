@@ -30,11 +30,30 @@ class RichClipboard {
   /// to HTML which will then be included in the returned data.
   ///
   /// Returns a future which completes to a [RichClipboardData].
-  static Future<RichClipboardData> getData() async => await _platform.getData();
+  static Future<RichClipboardData> getData() async {
+    final data = await _platform.getData();
+    if (data.html == null) {
+      return data;
+    }
+    return RichClipboardData(
+      text: data.text,
+      html: normalizeHtmlFromClipboard(data.html!),
+      quillDeltaJson: data.quillDeltaJson,
+    );
+  }
 
   /// Stores the provided data in the system clipboard.
   ///
   /// To clear the clipboard pass an empty [RichClipboardData].
-  static Future<void> setData(RichClipboardData data) async =>
-      _platform.setData(data);
+  static Future<void> setData(RichClipboardData data) async {
+    final preparedHtml =
+        data.html != null ? prepareHtmlForClipboard(data.html!) : null;
+    await _platform.setData(
+      RichClipboardData(
+        text: data.text,
+        html: preparedHtml,
+        quillDeltaJson: data.quillDeltaJson,
+      ),
+    );
+  }
 }
