@@ -5,6 +5,7 @@ let mimeTextPlain = "text/plain"
 let mimeTextHtml = "text/html"
 let mimeQuillDeltaJson = "application/vnd.quill.delta+json"
 let utTypeTextPlain = "public.text"
+let utTypeUtf8PlainText = "public.utf8-plain-text"
 let utTypeTextHtml = "public.html"
 let utTypeTextRtf = "public.rtf"
 let utTypeFlatRtfd = "com.apple.flat-rtfd"
@@ -144,6 +145,7 @@ public class RichClipboardPlugin: NSObject, FlutterPlugin {
         var item: [String: Any] = [:]
         if let text = data[mimeTextPlain] {
             item[utTypeTextPlain] = text
+            item[utTypeUtf8PlainText] = text
         }
         if let html = data[mimeTextHtml] {
             item[utTypeTextHtml] = Data(html.utf8)
@@ -152,6 +154,9 @@ public class RichClipboardPlugin: NSObject, FlutterPlugin {
             item[mimeQuillDeltaJson] = Data(quillDeltaJson.utf8)
         }
 
+        guard !item.isEmpty else {
+            return
+        }
         board.items = [item]
     }
 

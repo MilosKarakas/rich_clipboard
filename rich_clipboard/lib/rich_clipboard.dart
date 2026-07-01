@@ -1,7 +1,10 @@
 import 'package:rich_clipboard_platform_interface/rich_clipboard_platform_interface.dart';
 
 export 'package:rich_clipboard_platform_interface/rich_clipboard_platform_interface.dart'
-    show RichClipboardData, kQuillDeltaJsonClipboardMime;
+    show
+        RichClipboardData,
+        kQuillDeltaJsonClipboardMime,
+        prepareHtmlForClipboard;
 
 /// Utility methods for interacting with the system's clipboard with support for
 /// various data formats.
