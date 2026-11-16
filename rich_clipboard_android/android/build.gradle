@@ -21,18 +21,25 @@ rootProject.allprojects {
 }
 
 apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
+
+// The Kotlin Gradle Plugin is not applied here. With AGP 9+ and built-in
+// Kotlin, AGP compiles Kotlin itself. Otherwise (AGP < 9 or
+// android.builtInKotlin=false) the Flutter Gradle plugin applies
+// kotlin-android to this project. Flutter warns about any plugin whose build
+// file applies KGP, even conditionally, so do not add it back.
 
 android {
-    compileSdkVersion 30
+    // Required by AGP 8+; the guard keeps older AGP versions working.
+    if (project.android.hasProperty("namespace")) {
+        namespace 'com.bringingfire.rich_clipboard'
+    }
+
+    // Current AndroidX libraries require compiling against API 34+.
+    compileSdkVersion 36
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
-    }
-
-    kotlinOptions {
-        jvmTarget = '1.8'
     }
 
     sourceSets {
@@ -44,6 +51,17 @@ android {
     }
 }
 
-dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0"
+// The Kotlin standard library is added automatically by both built-in Kotlin
+// and the Kotlin Gradle Plugin, so it is not declared here.
+
+// Only when the Kotlin Gradle Plugin is applied (by Flutter). Built-in Kotlin
+// already matches jvmTarget to compileOptions.targetCompatibility. The value
+// is read lazily so it follows the host app if it overrides compileOptions.
+plugins.withId("org.jetbrains.kotlin.android") {
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        compilerOptions.jvmTarget.set(project.provider {
+            org.jetbrains.kotlin.gradle.dsl.JvmTarget.fromTarget(
+                    android.compileOptions.targetCompatibility.toString())
+        })
+    }
 }

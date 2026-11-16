@@ -11,23 +11,20 @@ enum ClipboardEncoding {
   utf16,
 }
 
-// Flag for [GlobalAlloc] to make the allocated memory movable.
-const _kGMemMovable = 0x0002;
-
 /// A wrapper around win32 API calls related to the clipboard.
 ///
 /// This class exists to isolate FFI code from the rest of the library, as well
 /// as allow for mocking out these API calls in tests.
 class Win32Clipboard {
   /// Opens the clipboard and prevents other applications from modifying it.
-  bool open() => OpenClipboard(0) == TRUE;
+  bool open() => OpenClipboard(null).value;
 
-  bool close() => CloseClipboard() == TRUE;
+  bool close() => CloseClipboard().value;
 
   /// Clears the clipboard and claims ownership of it.
   ///
   /// You must already have opened the clipboard with [Win32Clipboard.open].
-  bool empty() => EmptyClipboard() == TRUE;
+  bool empty() => EmptyClipboard().value;
 
   /// Register a clipboard format with the given name.
   ///
@@ -44,7 +41,8 @@ class Win32Clipboard {
         formatStringPtr[i] = formatStringUnits[i];
       }
       formatStringPtr[formatStringUnits.length] = NULL;
-      formatId = RegisterClipboardFormat(formatStringPtr.cast<Utf16>());
+      formatId =
+          RegisterClipboardFormat(PCWSTR(formatStringPtr.cast<Utf16>())).value;
     });
 
     return formatId == NULL ? null : formatId;
@@ -55,7 +53,7 @@ class Win32Clipboard {
   /// You must already have opened the clipboard with [Win32Clipboard.open].
   List<ClipboardFormat> getAvailableFormats() {
     final formats = <ClipboardFormat>[];
-    var currentFormat = EnumClipboardFormats(NULL);
+    var currentFormat = EnumClipboardFormats(NULL).value;
     using((arena) {
       final nameBuffer = arena.allocate<Uint16>(256);
       int maxChars = 256 ~/ sizeOf<Uint16>();
@@ -63,7 +61,7 @@ class Win32Clipboard {
       while (currentFormat != 0) {
         nameBuffer.elementAt(0).cast<Uint16>().value = NULL;
         GetClipboardFormatName(
-            currentFormat, nameBuffer.cast<Utf16>(), maxChars);
+            currentFormat, PWSTR(nameBuffer.cast<Utf16>()), maxChars);
         String? nameString = nameBuffer.cast<Utf16>().toDartString();
         if (nameString.isEmpty) {
           nameString = _win32CfToStrFallback[currentFormat];
@@ -72,7 +70,7 @@ class Win32Clipboard {
           format: currentFormat,
           name: nameString,
         ));
-        currentFormat = EnumClipboardFormats(currentFormat);
+        currentFormat = EnumClipboardFormats(currentFormat).value;
       }
     });
 
@@ -83,12 +81,12 @@ class Win32Clipboard {
   ///
   /// You must already have opened the clipboard with [Win32Clipboard.open].
   String? getString(int format, {encoding = ClipboardEncoding.utf16}) {
-    final handle = Pointer.fromAddress(GetClipboardData(format));
+    final handle = HGLOBAL(GetClipboardData(format).value);
     if (handle == nullptr) {
       return null;
     }
 
-    final rawPtr = GlobalLock(handle);
+    final rawPtr = GlobalLock(handle).value;
     if (rawPtr == nullptr) {
       GlobalUnlock(handle);
       return null;
@@ -144,12 +142,13 @@ class Win32Clipboard {
         break;
     }
 
-    final memHandle = GlobalAlloc(_kGMemMovable, (units.length + 1) * unitSize);
+    final memHandle =
+        GlobalAlloc(GMEM_MOVEABLE, (units.length + 1) * unitSize).value;
     if (memHandle == nullptr) {
       return;
     }
 
-    final memPointer = GlobalLock(memHandle).cast<Uint16>();
+    final memPointer = GlobalLock(memHandle).value.cast<Uint16>();
 
     // Unfortunately I haven't found a way to deduplicate this code further as
     // the exact type of `stringPointer` needs to be known at compile time.
@@ -174,7 +173,7 @@ class Win32Clipboard {
     }
 
     GlobalUnlock(memHandle);
-    SetClipboardData(format, memHandle.address);
+    SetClipboardData(format, HANDLE(memHandle));
   }
 }
 
